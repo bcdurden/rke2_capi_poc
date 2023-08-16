@@ -16,31 +16,35 @@ check-tools: ## Check to make sure you have the right tools
 kind: check-tools
 	$(call colorecho,"Deploying Rancher via CAPI to vSphere", 6)
 	$(call colorecho,"Creating KinD Cluster", 6)
-	kind create cluster --config "$(WORKING_DIR)/kind/kind-cluster-with-extramounts.yaml"
-	kubectl rollout status deployment coredns -n kube-system --timeout=90s
+# kind create cluster --config "$(WORKING_DIR)/kind/kind-cluster-with-extramounts.yaml"
+# kubectl rollout status deployment coredns -n kube-system --timeout=90s
 
+
+clusterctl:
 	export EXP_CLUSTER_RESOURCE_SET=true
 	export CLUSTER_TOPOLOGY=true
 
 	$(call colorecho,"Creating CAPV Resources", 6)
 	VSPHERE_USERNAME=$(VSPHERE_USERNAME) VSPHERE_PASSWORD=$(VSPHERE_PASSWORD) clusterctl --config ${WORKING_DIR}/clusterctl.yaml init -i vsphere --bootstrap rke2 --control-plane rke2
 
+# TODO: wait
+
 mgmt: check-tools
 	$(call colorecho,"Deploying RKE2 as a Downstream Cluster", 6)
-	kubecm delete $(CLUSTER_NAME) || true
 	VSPHERE_USERNAME=$(VSPHERE_USERNAME) VSPHERE_PASSWORD=$(VSPHERE_PASSWORD) clusterctl --config ${WORKING_DIR}/clusterctl.yaml generate cluster $(CLUSTER_NAME) \
 		--kubernetes-version v1.25.11+rke2r1 \
 		--control-plane-machine-count 1 \
 		--worker-machine-count 3 \
 		--from ${WORKING_DIR}/template/cluster_template_rke2_vsphere.yaml | tee custom-cluster.yaml | kubectl apply -f -
-	sleep 5
+# TODO: wait
 
 kube: check-tools
+	kubecm delete $(CLUSTER_NAME) || true
 	kubectl get secret $(CLUSTER_NAME)-kubeconfig -o yaml | yq e '.data.value' | base64 -d > /tmp/$(CLUSTER_NAME).yaml
 	kubecm add -c -f /tmp/$(CLUSTER_NAME).yaml
 
 mgmt-destroy: check-tools
-	kc delete -f custom-cluster.yaml 
+	kubectl delete -f custom-cluster.yaml 
 	kubecm delete $(CLUSTER_NAME) || true
 
 define colorecho

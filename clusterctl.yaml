@@ -21,8 +21,10 @@ VSPHERE_STORAGE_POLICY: ""                                    # This is the vSph
                                                               #  Keep this close to the minimum Kubernetes version of the cluster being created.
 
 TOKEN_VALUE: mysharedtoken
-
 NAMESPACE: default
+
+RANCHER_URL: rancher.sienarfleet.systems
+RANCHER_VERSION: 2.7.4
 
 providers:
 - name: "rke2"
