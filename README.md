@@ -32,8 +32,8 @@ The toolset is very minimal, you don't even need `helm` (yes, you read that corr
 * Make - This is installed by default in Linux and MacOS, you will need to install it in Windows.
 * yq - see [here](https://github.com/mikefarah/yq) - this is much like jq but tailored to yaml, **unnecessary unless you are extracting your kubeconfig using the `kube` target in my Makefile**
 * base64 - You likely already have this installed if using MacOS or Linux, but Windows users will need to install it most likely. WSL2 recommended if you're in the Windows world! **Unneccessary if you're not planning on using `kubectl` on your new cluster**
-* kubecm - This is what I use to merge kube contexts, it's an amazing tool located here []()
-* vsphere - you'll need a running vSphere setup. Too deep of a topic to cover, but I will be porting this to work in AWS and Kubevirt soon. You also need a VM template that supports cloud-init and vmware data sources.
+* kubecm - This is what I use to merge kube contexts, it's an amazing tool located [here](https://kubecm.cloud/)
+* vsphere - you'll need a running vSphere setup. Too deep of a topic to cover, but I will be porting this to work in AWS and Kubevirt soon. You also need a VM template that supports cloud-init and vmware data sources. This demo also expects the network you choose is using DHCP and the VIP chosen as a variable is a static IP in the same network
 
 ## Setup
 The only real setup here is to define your vSphere details in the Makefile and choose a cluster name (or leave it default). You'll also want to set the rancher hostname in the Makefile. If you don't have control over DNS entries, feel free to make up something and just edit your `/etc/hosts` file temporarily.
@@ -128,5 +128,7 @@ Add Context: mycluster
 |            |         rke2         |        default        |        default        |       https://10.1.1.4:6443       |    default   |
 +------------+----------------------+-----------------------+-----------------------+-----------------------------------+--------------+
 ```
+
+For inspecting progress, I would check the logs for the capv controller to see vsphere events (if your creds or config around vsphere is wrong, this is where you would see the errors) and inspect the two RKE2 controllers logs for bootstrap and control plane information.
 
 The cluster will be ready in about 5-7min, and Rancher will be running on the hostname you provided in 10-15min. Congrats! You just deployed Rancher with a single button press and a single API/language.
