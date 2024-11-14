@@ -1,15 +1,15 @@
-## -- Required workload cluster default settings -- ##
-VSPHERE_STORAGE_POLICY: ""                                    # This is the vSphere storage policy. Set it to "" if you don't want to use a storage policy.
+
 
 # defaulted values
-TOKEN_VALUE: mysharedtoken
-NAMESPACE: default
+CLUSTER_NAME: rke2-hv-test # Name of the cluster that will be created.
+NAMESPACE: default # Namespace where the cluster will be created.
+KUBERNETES_VERSION: v1.26.6 # Kubernetes Version
+VM_IMAGE_NAME: default/ubuntu # Should have the format <NAMESPACE>/<NAME> for an image that exists on Harvester
+CONTROL_PLANE_MACHINE_COUNT: 3
+WORKER_MACHINE_COUNT: 0
 
 # custom providers
 providers:
-- name: "rke2"
-  url: "https://github.com/rancher-sandbox/cluster-api-provider-rke2/releases/v0.1.1/bootstrap-components.yaml"
-  type: "BootstrapProvider"
-- name: "rke2"
-  url: "https://github.com/rancher-sandbox/cluster-api-provider-rke2/releases/v0.1.1/control-plane-components.yaml"
-  type: "ControlPlaneProvider"
+- name: "harvester"
+  url: "https://github.com/rancher-sandbox/cluster-api-provider-harvester/releases/latest/components.yaml"
+  type: "InfrastructureProvider"
