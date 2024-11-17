@@ -1,12 +1,26 @@
 
 
 # defaulted values
-CLUSTER_NAME: rke2-hv-test # Name of the cluster that will be created.
-NAMESPACE: default # Namespace where the cluster will be created.
-KUBERNETES_VERSION: v1.26.6 # Kubernetes Version
-VM_IMAGE_NAME: default/ubuntu # Should have the format <NAMESPACE>/<NAME> for an image that exists on Harvester
+CLUSTER_NAME: rke2-hv-test
+NAMESPACE: default
+RKE2_VERSION: v1.29.6+rke2r1
 CONTROL_PLANE_MACHINE_COUNT: 3
 WORKER_MACHINE_COUNT: 0
+CP_CPU_COUNT: 4
+CP_MEMORY: 8Gi
+WORKER_CPU_COUNT: 4
+WORKER_MEMORY: 16Gi
+VM_DISK_SIZE: 40Gi
+RANCHER_URL: rancher.dell.sienarfleet.systems
+
+# Should have the format <NAMESPACE>/<NAME> for an key that exists on Harvester
+SSH_KEYPAIR: default/command
+# Should have the format <NAMESPACE>/<NAME> for an image that exists on Harvester
+VM_IMAGE_NAME: default/ubuntu
+HARVESTER_ENDPOINT: 10.2.0.10
+VM_NETWORK: lab-workload
+LOAD_BALANCER_IP: 10.2.0.3
+LOAD_BALANCER_GATEWAY: 10.2.0.1
 
 # custom providers
 providers:

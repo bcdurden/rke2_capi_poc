@@ -1,8 +1,3 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: ${NAMESPACE}
----
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: Cluster 
 metadata:
@@ -113,8 +108,8 @@ metadata:
 spec:
   template: 
     spec:
-      cpu: 1
-      memory: 4Gi
+      cpu: ${WORKER_CPU_COUNT}
+      memory: ${WORKER_MEMORY}
       sshUser: ubuntu
       sshKeyPair: ${SSH_KEYPAIR}  
       networks:
@@ -133,8 +128,8 @@ metadata:
 spec:
   template: 
     spec:
-      cpu: 2
-      memory: 8Gi
+      cpu: ${CP_CPU_COUNT}
+      memory: ${CP_MEMORY}
       sshUser: ubuntu
       sshKeyPair: ${SSH_KEYPAIR}  
       networks:

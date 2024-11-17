@@ -1,0 +1,147 @@
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: Cluster 
+metadata:
+  namespace: ${NAMESPACE}
+  name: ${CLUSTER_NAME} 
+  labels:
+    ccm: external
+    csi: external
+    cni: external
+    cluster.x-k8s.io/cluster-name: ${CLUSTER_NAME}
+spec:
+  controlPlaneRef:
+    apiVersion: controlplane.cluster.x-k8s.io/v1alpha1
+    kind: RKE2ControlPlane
+    name: ${CLUSTER_NAME}-control-plane
+  infrastructureRef:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha1
+    kind: HarvesterCluster
+    name: ${CLUSTER_NAME}-hv
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha1
+kind: HarvesterCluster
+metadata:
+  name: ${CLUSTER_NAME}-hv
+  namespace: ${NAMESPACE}
+spec:
+  targetNamespace: default
+  loadBalancerConfig:
+    ipamType: pool
+    ipPoolRef: ${CLUSTER_NAME}-lb-pool
+    listeners:
+    - name: rke2-server
+      port: 9345
+      protocol: TCP
+      backendPort: 9345
+    - name: rke2-ingress
+      port: 443
+      protocol: TCP
+      backendPort: 443
+  server: ${HARVESTER_ENDPOINT}
+  identitySecret: 
+    namespace: ${NAMESPACE}
+    name: hv-identity-secret
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  namespace: ${NAMESPACE}
+  name: hv-identity-secret
+data: 
+  kubeconfig: ${HARVESTER_KUBECONFIG_B64}
+---
+apiVersion: controlplane.cluster.x-k8s.io/v1alpha1
+kind: RKE2ControlPlane
+metadata:
+  namespace: ${NAMESPACE}
+  name: ${CLUSTER_NAME}-control-plane
+spec:
+  replicas: ${CONTROL_PLANE_MACHINE_COUNT}
+  agentConfig:
+    version: ${RKE2_VERSION}
+  serverConfig:
+    cni: canal
+    # cloudProviderName: None
+  infrastructureRef:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha1
+    kind: HarvesterMachineTemplate
+    name: ${CLUSTER_NAME}-cp-machine
+    namespace: ${NAMESPACE}
+---
+apiVersion: bootstrap.cluster.x-k8s.io/v1alpha1
+kind: RKE2ConfigTemplate
+metadata:
+  namespace: ${NAMESPACE}
+  name: ${CLUSTER_NAME}-worker
+spec:
+  template:
+    spec:
+      agentConfig:
+        version: ${RKE2_VERSION}
+---
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineDeployment
+metadata:
+  namespace: ${NAMESPACE}
+  name: ${CLUSTER_NAME}-workers
+spec:
+  clusterName: ${CLUSTER_NAME}
+  replicas: ${WORKER_MACHINE_COUNT}
+  selector:
+    matchLabels:
+      cluster.x-k8s.io/cluster-name: ${CLUSTER_NAME}
+  template:
+    spec:
+      bootstrap:
+        configRef:
+          apiVersion: bootstrap.cluster.x-k8s.io/v1alpha1
+          kind: RKE2ConfigTemplate
+          name: ${CLUSTER_NAME}-worker
+          namespace: ${NAMESPACE}
+      clusterName: ${CLUSTER_NAME}
+      infrastructureRef:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1alpha1
+        kind: HarvesterMachineTemplate
+        name: ${CLUSTER_NAME}-wk-machine
+        namespace: ${NAMESPACE}
+      version: ${RKE2_VERSION}
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha1
+kind: HarvesterMachineTemplate
+metadata:
+  namespace: ${NAMESPACE}
+  name: ${CLUSTER_NAME}-wk-machine
+spec:
+  template: 
+    spec:
+      cpu: ${WORKER_CPU_COUNT}
+      memory: ${WORKER_MEMORY}
+      sshUser: ubuntu
+      sshKeyPair: ${SSH_KEYPAIR}  
+      networks:
+      - ${VM_NETWORK}
+      volumes:
+      - volumeType: image 
+        imageName: ${VM_IMAGE_NAME}
+        volumeSize: ${VM_DISK_SIZE}
+        bootOrder: 0
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha1
+kind: HarvesterMachineTemplate
+metadata:
+  namespace: ${NAMESPACE}
+  name: ${CLUSTER_NAME}-cp-machine
+spec:
+  template: 
+    spec:
+      cpu: ${CP_CPU_COUNT}
+      memory: ${CP_MEMORY}
+      sshUser: ubuntu
+      sshKeyPair: ${SSH_KEYPAIR}  
+      networks:
+      - ${VM_NETWORK}
+      volumes:
+      - volumeType: image 
+        imageName: ${VM_IMAGE_NAME}
+        volumeSize: ${VM_DISK_SIZE}
+        bootOrder: 0

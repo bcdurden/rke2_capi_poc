@@ -1,0 +1,79 @@
+---
+apiVersion: addons.cluster.x-k8s.io/v1beta1
+kind: ClusterResourceSet
+metadata:
+  labels:
+    cluster.x-k8s.io/cluster-name: ${CLUSTER_NAME}
+  name: ${CLUSTER_NAME}-rancher-crs-0
+  namespace: ${NAMESPACE}
+spec:
+  strategy: Reconcile
+  clusterSelector:
+    matchLabels:
+      cluster.x-k8s.io/cluster-name: ${CLUSTER_NAME}
+  resources:
+  - kind: Secret
+    name: rancher-namespace
+  - kind: Secret
+    name: rancher-helmchart
+  - kind: Secret
+    name: certmanager-helmchart
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: certmanager-helmchart
+  namespace: ${NAMESPACE}
+type: addons.cluster.x-k8s.io/resource-set
+stringData:
+  data: |
+    apiVersion: helm.cattle.io/v1
+    kind: HelmChart
+    metadata:
+      name: cert-manager
+      namespace: ${NAMESPACE}      
+    spec:
+      bootstrap: true
+      targetNamespace: cert-manager
+      createNamespace: true
+      valuesContent: |-
+        securityContext:
+          runAsNonRoot: true
+        crds:
+          enabled: true
+      version: v1.16.1
+      repo: https://charts.jetstack.io
+      chart: cert-manager
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: rancher-helmchart
+  namespace: ${NAMESPACE}
+type: addons.cluster.x-k8s.io/resource-set
+stringData:
+  data: |
+    apiVersion: helm.cattle.io/v1
+    kind: HelmChart
+    metadata:
+      name: rancher
+      namespace: ${NAMESPACE}      
+    spec:
+      bootstrap: false
+      targetNamespace: cattle-system
+      createNamespace: true
+      set:
+        hostname: ${RANCHER_URL}
+        replicas: 3
+        bootstrapPassword: admin
+      valuesContent: |-
+        global:
+          cattle:
+            psp:
+              enabled: false
+        ingress:
+          tls:
+            source: rancher
+      repo: https://releases.rancher.com/server-charts/stable
+      chart: rancher
+      version: v2.9.1
